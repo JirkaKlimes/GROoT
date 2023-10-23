@@ -63,7 +63,11 @@ class GROoT:
         return new_branches
 
     def sample_node(self):
+        # We want to explore nodes that have the lowest loss
         weights = np.array(list(map(lambda n: 1/n.loss, self.sorted_nodes)))
+        # We take into account the depth of the node, since it's acceptable for shallow nodes to have high loss
+        depths = np.array(list(map(lambda n: n.depth, self.sorted_nodes)))
+        weights /= depths / depths.max()
         probabilities = weights / weights.sum()
         return random.choices(self.sorted_nodes, probabilities)[0]
 
@@ -83,6 +87,7 @@ class Origin:
     def __init__(self, dims: int, dtype: np.dtype = np.float32):
         self.dims = dims
         self.dtype = dtype
+        self.depth = 0
 
     def get_position(self):
         return np.zeros(shape=self.dims, dtype=self.dtype)
@@ -95,11 +100,19 @@ class Node:
         self.loc = loc
         self.scale = scale
         self.dtype = dtype
+
         self.loss: Optional[float] = None
+        self.__depth = None
 
     @property
     def dims(self) -> int:
         return self.parrent.dims
+
+    @property
+    def depth(self) -> int:
+        if self.__depth is None:
+            self.__depth = self.parrent.depth + 1
+        return self.__depth
 
     def __lt__(self, other: "Node") -> bool:
         return self.loss < other.loss
