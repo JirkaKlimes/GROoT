@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 
 class Cache(ABC):
-    @ abstractmethod
+    @abstractmethod
     def __getitem__(self, node: "Node") -> np.ndarray:
         raise NotImplementedError
 
