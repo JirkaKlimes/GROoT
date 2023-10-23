@@ -63,8 +63,9 @@ class GROoT:
         return new_branches
 
     def sample_node(self):
-        # TODO: implement sampling based on loss of the Node
-        return random.choice(self.sorted_nodes)
+        weights = np.array(list(map(lambda n: 1/n.loss, self.sorted_nodes)))
+        probabilities = weights / weights.sum()
+        return random.choices(self.sorted_nodes, probabilities)[0]
 
     def add_node(self, node: "Node"):
         self.nodes[str(node.uuid)] = node
