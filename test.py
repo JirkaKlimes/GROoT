@@ -7,7 +7,6 @@ TARGET = np.random.uniform(-1, 1, 2)
 
 fig = plt.figure()
 ax = fig.add_subplot()
-
 groot = GROoT(2, 16)
 
 
@@ -19,6 +18,8 @@ while True:
         n.loss = loss
 
     ax.clear()
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
     ax.plot(TARGET[0], TARGET[1], 'ro')
     for n in groot.sorted_nodes:
         pos1 = n.get_position()
