@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from src.groot import GROoT
+from src.cache import PythonDictCache
 
 TARGET = np.random.uniform(-1, 1, 2)
 
 fig = plt.figure()
 ax = fig.add_subplot()
-groot = GROoT(2, 16)
+groot = GROoT(2, 16, cache=PythonDictCache(1024))
 
 
 while True:
@@ -28,6 +29,6 @@ while True:
 
     groot.add_rated_nodes(nodes)
     print(groot.sorted_nodes[0].loss)
-    plt.pause(0.3)
+    plt.pause(0.01)
 
 plt.show()

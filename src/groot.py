@@ -9,6 +9,8 @@ else:
 import bisect
 import random
 
+from src.cache import Cache
+
 
 class GROoT:
     """Guided Recursive Optimization over Tree"""
@@ -18,7 +20,8 @@ class GROoT:
         dims: int, branch_factor: int,
         initial_loc: Optional[float] = 1.0, initial_scale: Optional[float] = 0.2,
         decrease_factor: Optional[float] = 0.5,
-        dtype: np.dtype = np.float32
+        dtype: np.dtype = np.float32,
+        cache: Optional[Cache] = None
     ):
         self.dims = dims
         self.branch_factor = branch_factor
@@ -26,6 +29,7 @@ class GROoT:
         self.initial_scale = initial_scale
         self.decrease_factor = decrease_factor
         self.dtype = dtype
+        self.cache = cache
 
         self.nodes: Dict[str, Node] = {
             'Origin': Origin(self.dims, self.dtype)
@@ -43,7 +47,8 @@ class GROoT:
                     uuid.uuid4(),
                     self.initial_loc,
                     self.initial_scale,
-                    self.dtype
+                    self.dtype,
+                    self.cache
                 )
                 for _ in range(branch_factor)
             ]
@@ -57,7 +62,8 @@ class GROoT:
                 uuid.uuid4(),
                 node.loc * self.decrease_factor,
                 node.scale * self.decrease_factor,
-                self.dtype
+                self.dtype,
+                self.cache
             )
             new_branches.append(new_node)
         return new_branches
@@ -94,12 +100,21 @@ class Origin:
 
 
 class Node:
-    def __init__(self, parent: "Node", uuid: uuid.UUID, loc: float, scale: float, dtype: np.dtype = np.float32):
+    def __init__(
+        self,
+        parent: "Node",
+        uuid: uuid.UUID,
+        loc: float,
+        scale: float,
+        dtype: np.dtype = np.float32,
+        cache: Optional[Cache] = None
+    ):
         self.parrent = parent
         self.uuid = uuid
         self.loc = loc
         self.scale = scale
         self.dtype = dtype
+        self.cache = cache
 
         self.loss: Optional[float] = None
         self.__depth = None
@@ -132,7 +147,8 @@ class Node:
         offset = point * rng.normal(loc=self.loc, scale=self.scale)
         return offset
 
-    def get_position(self):
+    def get_position(self, use_cache=True):
         """absolute position of node in parameter space"""
-        # This needs to use caching for higher dimensions, otherwise not usable
-        return self.parrent.get_position() + self.get_offset()
+        if not use_cache or self.cache is None:
+            return self.parrent.get_position() + self.get_offset()
+        return self.cache[self]
