@@ -28,6 +28,7 @@ while True:
     x = np.linspace(max(losses), min(losses), 100)
     y = kde(x)
     loss_ax.plot(x, y)
+    loss_ax.set_yscale('log')
 
     tree_ax.set_xlim(-1, 1)
     tree_ax.set_ylim(-1, 1)
