@@ -44,7 +44,7 @@ if __name__ == '__main__':
     dims = Planter.get_dims(model)
 
     groot = GROoT(dims, 128, cache=PythonDictCache(
-        16384), initial_loc=10, initial_scale=5)
+        16384), initial_loc=10, initial_scale=5, use_cuda_sampling=True)
     fig = plt.figure()
     loss_kde_ax = fig.add_subplot(1, 2, 1)
     loss_ax = fig.add_subplot(1, 2, 2)

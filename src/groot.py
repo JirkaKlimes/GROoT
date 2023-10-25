@@ -1,11 +1,7 @@
 from typing import Optional, Dict, List
 import uuid
-import os
-if os.getenv('DEVICE') == 'CUDA':
-    print('Using CUDA for math operations')
-    import cupy as np
-else:
-    import numpy as np
+import numpy as np
+import cupy as cp
 import bisect
 import random
 
@@ -38,7 +34,8 @@ class GROoT:
         initial_loc: Optional[float] = 1.0, initial_scale: Optional[float] = 0.2,
         decrease_factor: Optional[float] = 0.5,
         dtype: np.dtype = np.float32,
-        cache: Optional[Cache] = None
+        cache: Optional[Cache] = None,
+        use_cuda_sampling: Optional[bool] = False
     ):
         self.dims = dims
         self.branch_factor = branch_factor
@@ -47,6 +44,7 @@ class GROoT:
         self.decrease_factor = decrease_factor
         self.dtype = dtype
         self.cache = cache
+        self.use_cuda_sampling = use_cuda_sampling
 
         self.nodes: Dict[str, Node] = {
             'Origin': Origin(self.dims, self.dtype)
@@ -75,7 +73,8 @@ class GROoT:
                     self.initial_loc,
                     self.initial_scale,
                     self.dtype,
-                    self.cache
+                    self.cache,
+                    self.use_cuda_sampling
                 )
                 for _ in range(branch_factor)
             ]
@@ -134,7 +133,8 @@ class Node:
         loc: float,
         scale: float,
         dtype: np.dtype = np.float32,
-        cache: Optional[Cache] = None
+        cache: Optional[Cache] = None,
+        use_cuda_sampling: Optional[bool] = False
     ):
         self.parent = parent
         self.uuid = uuid
@@ -142,6 +142,7 @@ class Node:
         self.scale = scale
         self.dtype = dtype
         self.cache = cache
+        self.use_cuda_sampling = use_cuda_sampling
 
         self.__loss: Optional[float] = None
         self.__depth = None
@@ -169,19 +170,27 @@ class Node:
     def __lt__(self, other: "Node") -> bool:
         return self.loss < other.loss
 
-    def rng_generator(self) -> np.random.Generator:
-        """Create RNG from UUID"""
-        seed = np.frombuffer(bytes.fromhex(self.uuid.hex), np.uint32)
-        return np.random.default_rng(seed)
+    def get_seed(self) -> np.random.Generator:
+        """Create seed from UUID"""
+        return np.frombuffer(bytes.fromhex(self.uuid.hex), np.uint32)
 
     def get_offset(self):
         """offset of node realative to parent"""
-        rng = self.rng_generator()
-        # sample random point on a nd-sphere
-        point = rng.normal(size=self.dims)
-        point /= np.linalg.norm(point)
-        # scale it by some random number
-        offset = point * rng.normal(loc=self.loc, scale=self.scale)
+        if self.use_cuda_sampling:
+            rng = cp.random.default_rng(self.get_seed())
+            # sample random point on a nd-sphere
+            point = rng.standard_normal(size=self.dims)
+            point /= cp.linalg.norm(point)
+            # scale it by some random number
+            offset = point * (self.loc + rng.standard_normal() * self.scale)
+            # move array to cpu
+            offset = offset.get()
+        else:
+            rng = np.random.default_rng(self.get_seed())
+            point = rng.normal(size=self.dims)
+            point /= np.linalg.norm(point)
+            offset = point * rng.normal(loc=self.loc, scale=self.scale)
+
         return offset
 
     def get_position(self, use_cache=True):
