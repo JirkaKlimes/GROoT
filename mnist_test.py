@@ -3,6 +3,9 @@ from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense
 from keras.utils import to_categorical
+from planter import Planter
+from keras.losses import MSE
+import keras.backend as K
 
 
 # Load and preprocess the MNIST dataset
@@ -23,31 +26,6 @@ model.add(Flatten())
 model.add(Dense(64, activation='relu'))
 model.add(Dense(10, activation='softmax'))
 
-
-def get_weights(model):
-    weights = []
-    for layer in model.layers:
-        layer_weights = layer.get_weights()
-        if layer_weights:
-            weights.extend([w.flatten() for w in layer_weights])
-    return np.concatenate(weights)
-
-
-def set_weights(model, weights_vector):
-    index = 0
-    for layer in model.layers:
-        layer_weights = layer.get_weights()
-        if layer_weights:
-            new_weights = []
-            for w in layer_weights:
-                shape = w.shape
-                size = np.prod(shape)
-                new_weights.append(
-                    weights_vector[index:index + size].reshape(shape))
-                index += size
-            layer.set_weights(new_weights)
-
-
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from scipy.stats import gaussian_kde
@@ -55,22 +33,23 @@ if __name__ == '__main__':
     from src.groot import GROoT
     from src.cache import PythonDictCache
 
-    model.compile(loss='categorical_crossentropy')
     model.summary()
 
-    dims = len(get_weights(model))
+    dims = Planter.get_dims(model)
 
-    groot = GROoT(dims, 32, cache=PythonDictCache(1024))
+    groot = GROoT(dims, 128, cache=PythonDictCache(1024))
     fig = plt.figure()
     loss_ax = fig.add_subplot()
 
     while True:
         nodes = groot.create_nodes()
 
-        for n in nodes:
-            set_weights(model, n.get_position())
-            loss = model.evaluate(x_train[:100], y_train[:100], verbose=1)
-            n.loss = loss
+        planter = Planter(model, [node.get_position() for node in nodes])
+        planter.compile(loss='mse')
+        yy = planter(x_train[:100])
+        for node, y in zip(nodes, yy):
+            loss = K.mean(MSE(y, y_train[:100])).numpy()
+            node.loss = loss
 
         groot.add_rated_nodes(nodes)
 
@@ -82,9 +61,9 @@ if __name__ == '__main__':
         loss_ax.plot(x, y)
         loss_ax.set_yscale('log')
 
-        print(
-            f"GROoT's loss: {groot.sorted_nodes[0].loss}")
-        plt.pause(1)
+        print(f"GROoT's loss: {groot.sorted_nodes[0].loss}")
+        print(f"GROoT's nodes: {len(groot.sorted_nodes)}")
+        plt.pause(0.001)
 
     # # Compile the model
     # model.compile(optimizer='adam', loss='categorical_crossentropy',
