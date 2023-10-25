@@ -9,11 +9,12 @@ if __name__ == '__main__':
 
     groot = GROoT(DIMS, BRANCH_FACTOR)
 
-    nodes = groot.create_nodes()
-    for node in nodes:
-        node.loss = np.random.random()
+    for _ in range(10):
+        nodes = groot.create_nodes()
+        for node in nodes:
+            node.loss = np.random.random()
 
-    groot.add_rated_nodes(nodes)
+        groot.add_rated_nodes(nodes)
 
     for node in groot.sorted_nodes:
         print(node.loss)
