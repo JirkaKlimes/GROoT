@@ -143,8 +143,18 @@ class Node:
         self.dtype = dtype
         self.cache = cache
 
-        self.loss: Optional[float] = None
+        self.__loss: Optional[float] = None
         self.__depth = None
+
+    @property
+    def loss(self):
+        return self.__loss
+
+    @loss.setter
+    def loss(self, value):
+        if self.loss is not None:
+            raise Exception('Loss already set. Cannot change loss of a node')
+        self.__loss = value
 
     @property
     def dims(self) -> int:
