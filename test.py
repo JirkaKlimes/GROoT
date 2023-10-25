@@ -35,7 +35,7 @@ while True:
     tree_ax.plot(TARGET[0], TARGET[1], 'ro')
     for n in nodes:
         pos1 = n.get_position()
-        pos2 = n.parrent.get_position()
+        pos2 = n.parent.get_position()
         tree_ax.plot([pos1[0], pos2[0]], [
                      pos1[1], pos2[1]], 'g-', linewidth=0.2)
 

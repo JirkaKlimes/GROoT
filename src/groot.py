@@ -136,7 +136,7 @@ class Node:
         dtype: np.dtype = np.float32,
         cache: Optional[Cache] = None
     ):
-        self.parrent = parent
+        self.parent = parent
         self.uuid = uuid
         self.loc = loc
         self.scale = scale
@@ -148,12 +148,12 @@ class Node:
 
     @property
     def dims(self) -> int:
-        return self.parrent.dims
+        return self.parent.dims
 
     @property
     def depth(self) -> int:
         if self.__depth is None:
-            self.__depth = self.parrent.depth + 1
+            self.__depth = self.parent.depth + 1
         return self.__depth
 
     def __lt__(self, other: "Node") -> bool:
@@ -177,5 +177,5 @@ class Node:
     def get_position(self, use_cache=True):
         """absolute position of node in parameter space"""
         if not use_cache or self.cache is None:
-            return self.parrent.get_position() + self.get_offset()
+            return self.parent.get_position() + self.get_offset()
         return self.cache[self]
