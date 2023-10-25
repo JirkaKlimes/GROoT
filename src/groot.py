@@ -11,6 +11,23 @@ import random
 
 from src.cache import Cache
 
+ASCII_ART = """
+ {v':   `   / `&~-,
+ v .              v
+ V  .~.      .~.  V
+ : (  0)    (  0) :
+  i `'`      `'` j
+   i     __    ,j
+    `%`~....~'&
+   o' /  /` -S,
+  o.~'.  )(  r  .o ,.
+ o',  %``/``& : 'bF     Loss: <loss>
+d', ,ri.~~-~.ri , +h    Nodes: <nodes>
+`oso' d`~..~`b 'sos`    Depth: <depth>
+     d`+ II +`b
+     i_:_yi_;y          GROoT v0.1
+"""
+
 
 class GROoT:
     """Guided Recursive Optimization over Tree"""
@@ -36,6 +53,15 @@ class GROoT:
         }
 
         self.sorted_nodes = []
+
+    def __str__(self):
+        art = ASCII_ART
+        art = art.replace('<loss>', str(
+            min(map(lambda n: n.loss, self.sorted_nodes))))
+        art = art.replace('<nodes>', str(len(self.sorted_nodes)))
+        art = art.replace('<depth>', str(
+            max(map(lambda n: n.depth, self.sorted_nodes))))
+        return art
 
     def create_nodes(self, branch_factor: Optional[int] = None):
         branch_factor = branch_factor or self.branch_factor
