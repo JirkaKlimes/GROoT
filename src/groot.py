@@ -20,7 +20,7 @@ ASCII_ART = """
    i     __    ,j
     `%`~....~'&
    o' /  /` -S,
-  o.~'.  )(  r  .o ,.
+  o.~'.  )(  r  .o ,.   Dims: <dims>
  o',  %``/``& : 'bF     Loss: <loss>
 d', ,ri.~~-~.ri , +h    Nodes: <nodes>
 `oso' d`~..~`b 'sos`    Depth: <depth>
@@ -56,6 +56,7 @@ class GROoT:
 
     def __str__(self):
         art = ASCII_ART
+        art = art.replace('<dims>', str(self.dims))
         art = art.replace('<loss>', str(
             min(map(lambda n: n.loss, self.sorted_nodes))))
         art = art.replace('<nodes>', str(len(self.sorted_nodes)))
